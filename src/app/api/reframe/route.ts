@@ -29,54 +29,52 @@ interface AnalysisResult {
   likely_interpretation: string;
   underlying_fear: string;
   emotional_need: string;
-  response_strategy: string;
 }
 
 // Phase 1 Prompt: Pure analysis, no empathy, just classification
 function buildAnalysisPrompt(): string {
-  return `Analyze the user's message. Return ONLY valid JSON. No prose. No empathy.
+  return `Analyze this message. Return ONLY JSON. No empathy. No filler. Just facts.
 
-Output this exact structure:
 {
-  "trigger_event": "What specific thing happened? Be precise.",
-  "likely_interpretation": "What meaning did they assign to this event?",
-  "underlying_fear": "What are they afraid this means about them or their future?",
-  "emotional_need": "What do they actually need right now? (understanding, validation, clarity, action, etc)",
-  "response_strategy": "What approach would help them see this differently?"
+  "trigger_event": "What specifically happened? Name the exact event or situation.",
+  "likely_interpretation": "What meaning did they assign? What does this event MEAN to them?",
+  "underlying_fear": "What are they afraid this says about them or their future? Go deep.",
+  "emotional_need": "What do they actually need? (being seen, feeling worthy, connection, control, safety)"
 }
 
-Be specific. Name things precisely. No generic statements.`;
+Be specific. No generic answers. Name things precisely.`;
 }
 
 // Phase 2 Prompt: Generate response using the analysis
 function buildResponsePrompt(analysis: AnalysisResult): string {
-  return `You are writing to a friend. You already analyzed their situation. Now respond naturally.
+  return `You are texting a friend at 2am. They just told you something heavy. Respond like a real person who gives a shit.
 
-ANALYSIS (already done, use this):
+ANALYSIS (you already figured this out):
 - What happened: ${analysis.trigger_event}
-- Their interpretation: ${analysis.likely_interpretation}
-- Their fear: ${analysis.underlying_fear}
+- Their interpretation: ${analysis.likely_interpretation}  
+- The fear underneath: ${analysis.underlying_fear}
 - What they need: ${analysis.emotional_need}
-- How to help: ${analysis.response_strategy}
 
-Write a 4-6 sentence response. Rules:
-- Echo 1-3 exact words from what they said
-- Help them see the interpretation they made (without saying "interpretation")
-- Name the fear underneath (gently)
-- Ask ONE precise question that goes deeper
-- No motivational language. No therapy explanations. No "I hear you" or "that must be hard"
+NOW RESPOND. But first, FORBIDDEN PHRASES (do not use these or you will sound like a robot):
+- "I hear you" / "I get it" / "I understand"
+- "That sounds" / "It seems like" / "It sounds like"
+- "must be hard" / "that's hard" / "you've been through a lot"
+- "scary thought" / "tough" / "difficult"
+- Any motivational language
+
+Instead: Use their EXACT words. Name the SPECIFIC thing that happened. Name the SPECIFIC fear.
 
 Return JSON:
 {
-  "acknowledgment": "1-2 sentences echoing their exact words, being real",
-  "thoughtPattern": "Name the thinking pattern simply, or null",
-  "patternNote": "Brief note about it, or null",
-  "reframe": "A different angle (start with 'Maybe...' or 'What if...' or 'It's possible...')",
-  "question": "One precise question that goes deeper",
-  "encouragement": "1 short sentence, or null"
+  "acknowledgment": "Use 2-4 of their exact words. React like a human.",
+  "thoughtPattern": "null (we don't label people)",
+  "patternNote": "null",
+  "reframe": "One specific different angle on their situation. Start with 'Wait...' or 'Actually...' or 'Hmm...'",
+  "question": "One specific question about their actual situation, not generic",
+  "encouragement": "null (let the question do the work)"
 }
 
-Be direct. Sound like a friend who actually gets it, not a counselor.`;
+Be raw. Be human. Be specific. If you sound like a therapist, you failed.`;
 }
 
 // Helper to parse JSON from AI response
@@ -218,8 +216,7 @@ export async function POST(request: NextRequest) {
         trigger_event: "Something happened that triggered a reaction",
         likely_interpretation: "This situation has meaning to them",
         underlying_fear: "There's a fear underneath",
-        emotional_need: "Understanding",
-        response_strategy: "Help them see the situation from a new angle"
+        emotional_need: "Understanding"
       };
     }
     
