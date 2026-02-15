@@ -11,7 +11,8 @@ import { checkCrisisKeywords, generateCrisisResponse, SEVERITY_LEVELS } from '@/
 
 /**
  * Checks if the user is describing a human interaction/situation
- * If true, we DON'T run distortion detection - they're reporting reality, not a thinking error
+ * This is used internally but no longer generates override text
+ * The AI prompt handles situation awareness naturally
  */
 function isLikelySituationMessage(text: string): boolean {
   const situationIndicators = [
@@ -29,18 +30,6 @@ function isLikelySituationMessage(text: string): boolean {
   }
 
   return false;
-}
-
-/**
- * Builds a simple orientation message when user is describing a situation
- * This acknowledges: "This might not be in your head"
- */
-function buildSimpleOrientation(text: string): string {
-  if (!isLikelySituationMessage(text)) return '';
-
-  return `Before we assume something is wrong with how you're thinking, I want to pause.
-
-What you're describing sounds like you're reacting to another person's behavior. When someone's actions feel inconsistent or unclear, the brain naturally tries to interpret what it means about the relationship. The distress often comes from uncertainty, not weakness or overthinking.`;
 }
 
 // ============================================================================
@@ -1368,12 +1357,6 @@ export async function POST(request: NextRequest) {
     const isSituationMessage = isLikelySituationMessage(sanitizedMessage);
     console.log(`🧠 Situation message: ${isSituationMessage}`);
     
-    // Build simple orientation if needed
-    const situationOrientation = buildSimpleOrientation(sanitizedMessage);
-    if (situationOrientation) {
-      console.log('💙 Situation orientation will be provided');
-    }
-    
     // Calculate turn count and current layer
     const turnCount = Math.floor(conversationHistory.length / 2) + 1;
     const currentLayer = getCurrentLayer(conversationHistory.length);
@@ -1561,17 +1544,8 @@ export async function POST(request: NextRequest) {
         parsed.encouragement = constructEncouragement(sanitizedMessage);
       }
       
-      // ============================================================================
-      // SITUATION ORIENTATION - The minimal fix
-      // Prepend orientation when user is describing a person/situation
-      // This says: "This might not be in your head"
-      // ============================================================================
-      if (situationOrientation) {
-        parsed.acknowledgment = situationOrientation + "\n\n" + parsed.acknowledgment;
-        // Use situation-aware label instead of clinical distortion name
-        parsed.distortionType = 'Reacting to uncertainty';
-        console.log(`💙 Applied situation orientation`);
-      }
+      // NOTE: Situation orientation removed - the AI prompt now handles this naturally
+      // by focusing on specific events and interpretations rather than general psychology
       
       parsed.icebergLayer = parsed.icebergLayer || currentLayer;
       parsed.layerInsight = parsed.layerInsight || constructLayerInsight(sanitizedMessage, parsed.icebergLayer || currentLayer);
