@@ -9,6 +9,9 @@ import {
   Download,
   ArrowLeft,
   Trash2,
+  CheckSquare,
+  Square,
+  X,
 } from 'lucide-react';
 import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
 import Link from 'next/link';
@@ -75,6 +78,8 @@ export default function ReflectPage() {
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -334,6 +339,49 @@ export default function ReflectPage() {
     }
   };
 
+  const toggleSelect = (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sessionId)) {
+        newSet.delete(sessionId);
+      } else {
+        newSet.add(sessionId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedIds(new Set(sessions.map(s => s.id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setSelectMode(false);
+  };
+
+  const deleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} session${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) return;
+    
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map(id => 
+          fetch(`/api/sessions/${id}`, { method: 'DELETE' })
+        )
+      );
+      setSessions(sessions.filter(s => !selectedIds.has(s.id)));
+      if (currentSessionId && selectedIds.has(currentSessionId)) {
+        handleReset();
+      }
+      setSelectedIds(new Set());
+      setSelectMode(false);
+    } catch (error) {
+      console.error('Error deleting sessions:', error);
+    }
+  };
+
   const exportSession = () => {
     const content = messages
       .map((m) => {
@@ -464,26 +512,79 @@ export default function ReflectPage() {
             className="fixed left-0 top-16 bottom-0 w-80 bg-white/95 backdrop-blur-lg border-r border-blue-100 z-40 overflow-y-auto"
           >
             <div className="p-4">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Session History</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-800">Session History</h2>
+                {!selectMode && sessions.length > 0 && (
+                  <button
+                    onClick={() => setSelectMode(true)}
+                    className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                  >
+                    <CheckSquare className="w-3.5 h-3.5" />
+                    Select
+                  </button>
+                )}
+                {selectMode && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={selectAll}
+                      className="text-xs text-blue-600 hover:text-blue-700"
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={clearSelection}
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              {selectMode && selectedIds.size > 0 && (
+                <button
+                  onClick={deleteSelected}
+                  className="w-full mb-3 py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Selected ({selectedIds.size})
+                </button>
+              )}
+              
               <div className="space-y-2">
                 {sessions.map((session) => (
                   <div
                     key={session.id}
-                    onClick={() => loadSession(session.id)}
+                    onClick={() => !selectMode && loadSession(session.id)}
                     className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer relative group ${
-                      currentSessionId === session.id
+                      selectedIds.has(session.id)
+                        ? 'border-blue-500 bg-blue-50'
+                        : currentSessionId === session.id
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
                     }`}
                   >
-                    <button
-                      onClick={(e) => deleteSession(session.id, e)}
-                      className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                      title="Delete session"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                    <p className="text-sm font-medium text-gray-800 truncate pr-6">
+                    {selectMode ? (
+                      <button
+                        onClick={(e) => toggleSelect(session.id, e)}
+                        className="absolute top-3 right-3 text-blue-600"
+                      >
+                        {selectedIds.has(session.id) ? (
+                          <CheckSquare className="w-5 h-5" />
+                        ) : (
+                          <Square className="w-5 h-5 text-gray-300" />
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => deleteSession(session.id, e)}
+                        className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                        title="Delete session"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    <p className="text-sm font-medium text-gray-800 truncate pr-8">
                       {session.title || 'Untitled Session'}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
