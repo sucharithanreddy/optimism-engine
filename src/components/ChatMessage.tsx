@@ -185,7 +185,6 @@ export function ChatMessage({ message, isLatest }: ChatMessageProps) {
 
             {message.reframe && (
               <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl p-4 border border-teal-100">
-                <p className="text-xs font-semibold text-teal-600 mb-2">Another way to see it</p>
                 <p className="text-[15px] text-gray-700">{message.reframe}</p>
               </div>
             )}

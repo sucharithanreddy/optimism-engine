@@ -286,8 +286,8 @@ export async function POST(request: NextRequest) {
     }
     
     // Ensure required fields
-    parsed.acknowledgment = parsed.acknowledgment || "I hear you.";
-    parsed.probingQuestion = parsed.probingQuestion || parsed.question || "What's underneath this for you?";
+    parsed.acknowledgment = parsed.acknowledgment || "Tell me more.";
+    parsed.probingQuestion = parsed.probingQuestion || parsed.question;
     parsed.icebergLayer = 'surface';
     parsed.layerInsight = analysis.underlying_fear || '';
     
