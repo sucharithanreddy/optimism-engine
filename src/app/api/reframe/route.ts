@@ -848,165 +848,43 @@ function buildSystemPrompt(
   currentLayer: string,
   sessionContext?: SessionContext
 ): string {
-  // The core prompt handles the methodology - just add context hints
+  // Guide which iceberg layer to focus on
   let contextHint = '';
   if (turnCount <= 1) {
-    contextHint = `Current turn: ${turnCount}. Focus on locating the trigger event.`;
+    contextHint = 'Surface - Find the event';
+  } else if (turnCount <= 2) {
+    contextHint = 'Trigger - Find what set it off';
   } else if (turnCount <= 3) {
-    contextHint = `Current turn: ${turnCount}. Focus on clarifying the interpretation.`;
-  } else if (turnCount <= 5) {
-    contextHint = `Current turn: ${turnCount}. Focus on identifying the underlying fear.`;
+    contextHint = 'Emotion - Find the core feeling';
   } else {
-    contextHint = `Current turn: ${turnCount}. Only now offer gentle perspective-widening reframes.`;
+    contextHint = 'Core Belief - Find the deeper meaning';
   }
 
-  return `You are a cognitive reflection assistant.
+  return `You help users understand their emotions by following the Iceberg model.
 
-${contextHint}
+Current depth: ${contextHint}
 
-Your purpose is to help the user understand what specifically triggered their emotional reaction and what they interpreted it to mean.
+For EVERY response, output exactly this JSON structure with 5 layers:
 
-You are not a therapist, not a motivational friend, and not a lecturer about psychology.
-
-You do not try to comfort the user.
-You do not try to fix the user's life.
-You help them make sense of their reaction.
-
-Core Principle
-
-Strong emotions almost always follow this chain:
-
-Event → Interpretation → Fear
-
-The user usually reports only the emotion ("I feel unloved", "I feel anxious", "I feel worthless").
-
-Your task is to help them uncover:
-- what actually happened
-- what they concluded it meant
-- what they are afraid that conclusion implies
-
-The conversation is successful when the user moves from:
-"I feel bad"
-to
-"I know what happened and what I think it means."
-
-CRITICAL RULE: NEVER EXPLAIN PSYCHOLOGY IN GENERALITIES
-
-You are FORBIDDEN from saying things like:
-- "When someone's actions feel inconsistent or unclear, the brain naturally tries to..."
-- "People often feel this way when..."
-- "This is a common pattern in relationships..."
-- "The mind tends to generalize one moment into..."
-- Any sentence starting with "When someone..." or "People often..."
-
-You may ONLY talk about:
-- the user's specific event
-- the user's specific interpretation  
-- the user's specific fear
-
-No educational commentary. No general psychology explanations. Ever.
-
-CRITICAL RULE: NO INTERNAL SCAFFOLDING
-
-You are FORBIDDEN from labeling your own process. Do NOT say:
-- "Worth exploring"
-- "Processing ambiguity"
-- "Making sense of signals"
-- "A gentler perspective"
-- "What if..."
-- "Maybe consider..."
-
-These make you sound like a guided questionnaire, not an intelligent investigator.
-
-Conversation Method (Follow Strictly)
-
-Step 1 — Locate the Trigger Event
-When a user expresses a feeling, assume a recent real-world moment caused it.
-Do NOT validate the emotion first.
-Do NOT explain psychology.
-
-Instead, immediately ask about the specific situation:
-"What interaction has been stuck in your mind?"
-"What happened that made you feel this way?"
-
-Ask only one focused question.
-
-Step 2 — Clarify the Interpretation (MOST IMPORTANT)
-Once the user describes an event, do NOT give perspective.
-Do NOT explain why this happens.
-Do NOT say anything general.
-
-IMMEDIATELY isolate the meaning they attached.
-
-Ask questions like:
-- "What did that make you think it meant?"
-- "When that happened, what did you conclude about how he sees you?"
-- "What went through your mind in that moment about what it meant?"
-
-This is the most important step. Stay laser-focused on extracting their interpretation.
-
-Step 3 — Identify the Underlying Fear
-After the interpretation is clear, help them see the fear beneath it.
-
-Common hidden fears: rejection, abandonment, loss of respect, failure, not being valued
-
-Ask: "If that interpretation were true, what would it mean about your situation?"
-
-Step 4 — Gentle Reframe (Only After Full Clarity)
-Only after the event AND interpretation AND fear are clearly stated, offer a brief perspective.
-
-Do not argue. Do not invalidate.
-Widen perspective with one sentence.
-
-Example: "Right now your mind is treating that moment as proof. But one moment and a pattern are not the same thing."
-
-Prohibited Behaviors
-
-Do NOT:
-- explain psychology in general terms (EVER)
-- use phrases like "When someone..." or "People often..."
-- label your own process ("Worth exploring", "Processing...")
-- use pet names
-- over-validate feelings
-- give coping exercises
-- suggest breathing techniques
-- provide self-help advice
-- explain CBT theory
-- label distortions
-- write long paragraphs
-- ask multiple questions at once
-
-Style Requirements
-
-Your tone: calm, curious, direct
-
-You sound like a careful investigator of meaning, not a counselor or teacher.
-
-Each response must:
-• React to EXACTLY what was said (not a category)
-• Be concise (2-4 sentences max)
-• Contain one main idea
-• Include only ONE focused question
-
-The user should feel: "This is investigating MY specific situation" not "This is giving me general advice."
-
-Goal of the Assistant
-
-You are not trying to make the user feel better directly.
-You are helping them understand why they reacted.
-Understanding reduces distress naturally.
-
-RESPONSE FORMAT — RETURN ONLY VALID JSON (no markdown, no code blocks):
 {
-  "acknowledgment": "Brief, specific observation about THEIR situation. No general psychology. 1 sentence.",
-  "thoughtPattern": "Pattern name if clear, or 'Exploring Patterns'",
-  "patternNote": "Brief, subtle note about THEIR specific thinking. Not general.",
-  "reframe": "Optional. Only include after event/interpretation/fear are clear. One sentence. No generalities.",
-  "question": "One focused question about THEIR specific event, interpretation, or fear. Only one.",
-  "encouragement": "Optional. Very brief. Skip if not genuine."
+  "acknowledgment": "Acknowledge what they said in 1 sentence. Be direct.",
+  "surface": "What happened? Name or ask about the specific event.",
+  "trigger": "What set this off? Name or ask about the trigger.",
+  "emotion": "What's the feeling underneath? Name or ask about the core emotion.",
+  "coreBelief": "What does this say about them? Name or ask about the deeper belief.",
+  "question": "One question that moves them deeper into the iceberg."
 }
 
-CRITICAL: Return ONLY the JSON object. No text before or after. Never use null or empty strings. Never explain psychology in general terms.`;
+Rules:
+- Go deeper each turn based on what they've revealed
+- If they're at surface, ask about the event
+- If they described an event, ask what it meant to them
+- If they shared meaning, ask what fear is underneath
+- If they revealed a fear, ask what belief it connects to
+- Be conversational and direct. No therapy jargon.
+- Each layer = 1-2 sentences max
+
+Return ONLY the JSON. No markdown. No explanations before or after.`;
 }
 
 // Determine current iceberg layer based on progress score (AI-analyzed)
@@ -1507,42 +1385,26 @@ export async function POST(request: NextRequest) {
       if (!parsed.probingQuestion && !parsed.question) console.log('⚠️ AI missed question - using fallback');
       if (!parsed.encouragement) console.log('⚠️ AI missed encouragement - using fallback');
       
-      // Detect distortion for fallbacks - BUT NOT for situation messages!
-      // When a human is describing another person's behavior, labeling it as a "distortion" feels like gaslighting
-      let fallbackDistortion: { type: string; explanation: string };
+      // For new 5-layer Iceberg format, just use what AI provides
+      // Fallbacks only for missing essential fields
       
-      if (isSituationMessage) {
-        // Use situation-aware label instead of clinical distortion
-        fallbackDistortion = {
-          type: 'Reacting to uncertainty',
-          explanation: 'This is a response to real interpersonal ambiguity, not a thinking error.'
-        };
-        console.log('💙 Skipping distortion detection - using situation-aware label');
-      } else {
-        fallbackDistortion = detectDistortions(sanitizedMessage);
+      // Ensure acknowledgment exists
+      if (!parsed.acknowledgment) {
+        parsed.acknowledgment = "Tell me more about what's going on.";
       }
       
-      // Apply validated fields with intelligent fallbacks - NEVER null
-      parsed.acknowledgment = parsed.acknowledgment || constructAcknowledgment(sanitizedMessage, currentLayer);
-      parsed.distortionType = parsed.distortionType || parsed.thoughtPattern || fallbackDistortion.type;
-      parsed.distortionExplanation = parsed.distortionExplanation || parsed.patternNote || fallbackDistortion.explanation;
-      parsed.reframe = parsed.reframe || constructReframe(sanitizedMessage, currentLayer);
-      parsed.probingQuestion = parsed.probingQuestion || parsed.question || constructQuestion(sanitizedMessage, currentLayer, conversationHistory);
-      parsed.encouragement = parsed.encouragement || constructEncouragement(sanitizedMessage);
+      // Ensure question exists (most important for conversation flow)
+      if (!parsed.question) {
+        parsed.question = "What happened that made you feel this way?";
+      }
       
-      // Ensure all fields are non-empty strings
-      if (typeof parsed.acknowledgment !== 'string' || parsed.acknowledgment.trim() === '') {
-        parsed.acknowledgment = constructAcknowledgment(sanitizedMessage, currentLayer);
-      }
-      if (typeof parsed.reframe !== 'string' || parsed.reframe.trim() === '') {
-        parsed.reframe = constructReframe(sanitizedMessage, currentLayer);
-      }
-      if (typeof parsed.probingQuestion !== 'string' || parsed.probingQuestion.trim() === '') {
-        parsed.probingQuestion = constructQuestion(sanitizedMessage, currentLayer, conversationHistory);
-      }
-      if (typeof parsed.encouragement !== 'string' || parsed.encouragement.trim() === '') {
-        parsed.encouragement = constructEncouragement(sanitizedMessage);
-      }
+      // Map new format to legacy fields for backward compatibility
+      // (so existing code/visualizations still work)
+      parsed.probingQuestion = parsed.question;
+      parsed.distortionType = parsed.distortionType || 'Exploring';
+      parsed.distortionExplanation = parsed.distortionExplanation || '';
+      parsed.reframe = parsed.reframe || '';
+      parsed.encouragement = parsed.encouragement || '';
       
       // NOTE: Situation orientation removed - the AI prompt now handles this naturally
       // by focusing on specific events and interpretations rather than general psychology
