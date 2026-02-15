@@ -944,160 +944,6 @@ function analyzeDefaultProgress(messages: ChatMessage[]): { score: number; layer
   return { score: totalScore, layerProgress };
 }
 
-// Smart fallback constructors - use local analysis for contextual responses
-function constructAcknowledgment(message: string, layer: string): string {
-  const emotion = analyzeEmotion(message);
-  const templates: Record<string, string[]> = {
-    surface: [
-      `I can really feel the ${emotion.primary} in what you're sharing. That sounds genuinely tough.`,
-      `There's real ${emotion.primary} here, and it makes sense. What you're going through isn't easy.`,
-      `I hear you on this. The ${emotion.primary} you're feeling is completely valid.`
-    ],
-    trigger: [
-      `That's a really insightful connection you're making. Seeing the trigger is important.`,
-      `You're starting to see the pattern here, and that takes real self-awareness.`,
-      `It takes courage to look at what sets these feelings off. You're doing that work.`
-    ],
-    emotion: [
-      `You're getting to the heart of something here. This emotion has something to tell you.`,
-      `There's real depth to what you're uncovering. This feeling matters.`,
-      `The emotional layer is where real understanding happens. You're getting there.`
-    ],
-    coreBelief: [
-      `Wow. You've just named something really fundamental. That takes courage.`,
-      `That's a powerful insight about yourself. Naming it is the first step to changing it.`,
-      `You've reached something deep. This belief has been shaping a lot, hasn't it?`
-    ]
-  };
-  const layerTemplates = templates[layer] || templates.surface;
-  return layerTemplates[Math.floor(Math.random() * layerTemplates.length)];
-}
-
-function constructReframe(message: string, layer: string): string {
-  const distortion = detectDistortions(message);
-  const emotion = analyzeEmotion(message);
-  
-  const reframes: Record<string, string[]> = {
-    surface: [
-      `Maybe this ${emotion.primary} is a signal that something matters to me, not just something bringing me down.`,
-      `I don't have to solve this today. I can just let it be here and see what it needs.`,
-      `This feeling is real, but it doesn't have to be the whole story.`,
-      `What if this thought is just one perspective, not the absolute truth?`
-    ],
-    trigger: [
-      `Noticing what sets this off is actually a strength. Now I can choose how to respond.`,
-      `This pattern keeps showing up - maybe there's something here worth understanding.`,
-      `The trigger isn't the problem. It's showing me where I still have work to do.`,
-      `Awareness of the pattern is the first step to changing it.`
-    ],
-    emotion: [
-      `This ${emotion.primary} is valid, but it's also temporary. Feelings pass, even when they feel permanent.`,
-      `I can make space for this emotion without letting it run the show.`,
-      `Emotions are information, not commands. I get to decide what to do with this.`,
-      `Maybe this feeling just needs to be acknowledged, not fixed.`
-    ],
-    coreBelief: [
-      `This belief feels true, but that doesn't mean it is. Beliefs can be questioned.`,
-      `I learned this about myself somewhere. Maybe it's time to unlearn it.`,
-      `Who would I be without this belief? Maybe that person is worth getting to know.`,
-      `Just because I've believed this for a long time doesn't make it fact.`
-    ]
-  };
-  
-  const layerReframes = reframes[layer] || reframes.surface;
-  return layerReframes[Math.floor(Math.random() * layerReframes.length)];
-}
-
-function constructQuestion(message: string, layer: string, history: ChatMessage[]): string {
-  const emotion = analyzeEmotion(message);
-  const previousQuestions = history
-    .filter(m => m.role === 'assistant' && m.probingQuestion)
-    .map(m => m.probingQuestion)
-    .filter(Boolean) as string[];
-  
-  const questions: Record<string, string[]> = {
-    surface: [
-      `What was happening right before this thought showed up?`,
-      `When does this feeling tend to visit you? Morning, night, around certain people?`,
-      `If you could change one thing about this situation, what would it be?`,
-      `What does this ${emotion.primary} feel like in your body?`
-    ],
-    trigger: [
-      `What about this situation hits hardest for you personally?`,
-      `When have you felt this way before? Is there a pattern here?`,
-      `What does this situation remind you of?`,
-      `If this didn't bother you, what would that say about what you care about?`
-    ],
-    emotion: [
-      `What do you think this ${emotion.primary} is trying to tell you?`,
-      `If a friend felt this way, what would you say to them?`,
-      `What would help right now - to be heard, to problem-solve, or just to sit with it?`,
-      `What does this feeling need from you?`
-    ],
-    coreBelief: [
-      `Where do you think you first learned to see yourself this way?`,
-      `If this belief wasn't true, what would that mean for you?`,
-      `Whose voice is that - yours, or someone else's?`,
-      `What would you tell a friend who believed this about themselves?`
-    ]
-  };
-  
-  const layerQuestions = questions[layer] || questions.surface;
-  
-  // Filter out questions similar to what was already asked
-  const availableQuestions = layerQuestions.filter(q => {
-    return !previousQuestions.some(pq => 
-      pq && q && (pq.toLowerCase().slice(0, 30) === q.toLowerCase().slice(0, 30))
-    );
-  });
-  
-  return (availableQuestions.length > 0 ? availableQuestions : layerQuestions)[Math.floor(Math.random() * Math.max(1, availableQuestions.length))];
-}
-
-function constructEncouragement(message: string): string {
-  const emotion = analyzeEmotion(message);
-  
-  const encouragements = [
-    `Being here, actually looking at this - that takes guts. Seriously.`,
-    `You're showing up for yourself right now. That matters.`,
-    `This isn't easy work, but you're doing it. That counts for something.`,
-    `The fact that you're even thinking about this shows self-awareness most people never develop.`,
-    `Whatever you're feeling right now - it's okay. You're okay.`
-  ];
-  
-  return encouragements[Math.floor(Math.random() * encouragements.length)];
-}
-
-function constructLayerInsight(message: string, layer: string): string {
-  const emotion = analyzeEmotion(message);
-  
-  const insights: Record<string, string[]> = {
-    surface: [
-      `You've opened up about something that's clearly weighing on you. Your ${emotion.primary} is valid and worth exploring.`,
-      `This thought is like the tip of an iceberg - there's more beneath it. Your ${emotion.primary} is pointing you toward something deeper.`,
-      `Thank you for sharing this. What you're experiencing is real, and your ${emotion.primary} matters.`
-    ],
-    trigger: [
-      `You're starting to see what sets off these feelings. Understanding your triggers is the first step to change.`,
-      `The pattern is becoming clearer. Something specific is activating this response in you.`,
-      `Noticing the trigger is powerful. Your ${emotion.primary} has a source, and you're finding it.`
-    ],
-    emotion: [
-      `You've gone deeper into the emotional core. This ${emotion.primary} has something important to tell you.`,
-      `Beneath the surface thoughts lies this feeling. You're getting closer to understanding yourself.`,
-      `This emotional layer holds keys to why you react the way you do. Your ${emotion.primary} is a messenger.`
-    ],
-    coreBelief: [
-      `You've discovered something fundamental about how you see yourself. This belief has been shaping your reactions.`,
-      `This core belief may have been with you for a long time. Naming it is the first step to questioning it.`,
-      `What you've found at the core is powerful - it's been influencing your thoughts and feelings from deep within.`
-    ]
-  };
-  
-  const layerInsights = insights[layer] || insights.surface;
-  return layerInsights[Math.floor(Math.random() * layerInsights.length)];
-}
-
 // ============================================================================
 // STRUCTURED TEXT PARSER
 // Parses AI responses when they return formatted text instead of JSON
@@ -1149,15 +995,7 @@ function parseStructuredTextResponse(text: string, userMessage: string): Record<
       const distortion = detectDistortions(userMessage);
       result.patternNote = distortion.explanation;
     }
-    if (!result.reframe) {
-      result.reframe = constructReframe(userMessage, 'surface');
-    }
-    if (!result.question) {
-      result.question = constructQuestion(userMessage, 'surface', []);
-    }
-    if (!result.encouragement) {
-      result.encouragement = constructEncouragement(userMessage);
-    }
+    // No fallbacks - AI provides everything or we return null
     
     return result;
   }
@@ -1329,26 +1167,15 @@ export async function POST(request: NextRequest) {
         }
       }
       
-      // If all parsing failed, build a complete response using intelligent fallbacks
+      // If all parsing failed, return error - let user retry
       if (!parsed) {
-        console.log('⚠️ All parsing failed, building complete response from scratch');
-        const emotion = analyzeEmotion(sanitizedMessage);
-        const distortion = detectDistortions(sanitizedMessage);
-        parsed = {
-          acknowledgment: constructAcknowledgment(sanitizedMessage, currentLayer),
-          thoughtPattern: distortion.type,
-          patternNote: distortion.explanation,
-          reframe: constructReframe(sanitizedMessage, currentLayer),
-          question: constructQuestion(sanitizedMessage, currentLayer, conversationHistory),
-          encouragement: constructEncouragement(sanitizedMessage),
-          icebergLayer: currentLayer,
-          layerInsight: constructLayerInsight(sanitizedMessage, currentLayer),
-        };
+        console.log('⚠️ All parsing failed');
+        return NextResponse.json({ 
+          error: 'Could not process response. Please try again.' 
+        }, { status: 500 });
       }
       
       // Map AI's field names to frontend expected names
-      // AI returns: thoughtPattern, patternNote, question
-      // Frontend expects: distortionType, distortionExplanation, probingQuestion
       if (parsed.thoughtPattern && !parsed.distortionType) {
         parsed.distortionType = parsed.thoughtPattern;
       }
@@ -1359,100 +1186,16 @@ export async function POST(request: NextRequest) {
         parsed.probingQuestion = parsed.question;
       }
       
-      // VALIDATION: Ensure all 5 core parts exist (AI sometimes skips fields)
-      // Use intelligent fallbacks when AI misses fields - NEVER return null
-      
-      // Check if acknowledgment contains raw AI text patterns (indicates failed parse)
-      const hasBadPatterns = parsed.acknowledgment && (
-        parsed.acknowledgment.includes('**Thought Pattern:**') ||
-        parsed.acknowledgment.includes('**Pattern Note:**') ||
-        parsed.acknowledgment.includes('**Reframe:**') ||
-        parsed.acknowledgment.includes('**Question:**') ||
-        parsed.acknowledgment.includes('**Encouragement:**') ||
-        parsed.acknowledgment.includes('"thoughtPattern"') ||
-        parsed.acknowledgment.includes('{\n')
-      );
-      
-      if (hasBadPatterns) {
-        console.log('⚠️ Acknowledgment contains raw AI text, rebuilding');
-        parsed.acknowledgment = null; // Force rebuild
-      }
-      
-      // Log warning if AI missed required fields
-      if (!parsed.acknowledgment) console.log('⚠️ AI missed acknowledgment - using fallback');
-      if (!parsed.distortionType && !parsed.thoughtPattern) console.log('⚠️ AI missed thoughtPattern - using fallback');
-      if (!parsed.reframe) console.log('⚠️ AI missed reframe - using fallback');
-      if (!parsed.probingQuestion && !parsed.question) console.log('⚠️ AI missed question - using fallback');
-      if (!parsed.encouragement) console.log('⚠️ AI missed encouragement - using fallback');
-      
-      // For new 5-layer Iceberg format, just use what AI provides
-      // Fallbacks only for missing essential fields
-      
-      // Ensure acknowledgment exists
-      if (!parsed.acknowledgment) {
-        parsed.acknowledgment = "Tell me more about what's going on.";
-      }
-      
-      // Ensure question exists (most important for conversation flow)
-      if (!parsed.question) {
-        parsed.question = "What happened that made you feel this way?";
-      }
+      // Just use what the AI provided - no fallbacks
       
       // Map new format to legacy fields for backward compatibility
-      // (so existing code/visualizations still work)
       parsed.probingQuestion = parsed.question;
-      parsed.distortionType = parsed.distortionType || 'Exploring';
-      parsed.distortionExplanation = parsed.distortionExplanation || '';
-      parsed.reframe = parsed.reframe || '';
-      parsed.encouragement = parsed.encouragement || '';
       
-      // NOTE: Situation orientation removed - the AI prompt now handles this naturally
-      // by focusing on specific events and interpretations rather than general psychology
-      
-      parsed.icebergLayer = parsed.icebergLayer || currentLayer;
-      parsed.layerInsight = parsed.layerInsight || constructLayerInsight(sanitizedMessage, parsed.icebergLayer || currentLayer);
-      
-      // Process AI-analyzed progress
-      let progressScore = parsed.progressScore;
-      let layerProgress = {
-        surface: parsed.surfaceProgress ?? 0,
-        trigger: parsed.triggerProgress ?? 0,
-        emotion: parsed.emotionProgress ?? 0,
-        coreBelief: parsed.coreBeliefProgress ?? 0,
-      };
-      let progressNote = parsed.progressNote || 'Beginning to explore your thoughts';
-      
-      // If AI didn't provide progress, use local analysis
-      if (typeof progressScore !== 'number' || progressScore < 0) {
-        const defaultProgress = analyzeDefaultProgress(conversationHistory);
-        progressScore = defaultProgress.score;
-        layerProgress = defaultProgress.layerProgress;
-        progressNote = `Turn ${turnCount}: Exploring at the ${currentLayer} level`;
-      }
-      
-      // Ensure progress is within bounds
-      progressScore = Math.max(0, Math.min(100, progressScore));
-      layerProgress = {
-        surface: Math.max(0, Math.min(100, layerProgress.surface)),
-        trigger: Math.max(0, Math.min(100, layerProgress.trigger)),
-        emotion: Math.max(0, Math.min(100, layerProgress.emotion)),
-        coreBelief: Math.max(0, Math.min(100, layerProgress.coreBelief)),
-      };
-      
-      // Update layer based on AI-analyzed progress (more realistic)
-      const progressBasedLayer = getCurrentLayerFromProgress(progressScore);
-      if (progressBasedLayer !== currentLayer) {
-        console.log(`Layer updated from ${currentLayer} to ${progressBasedLayer} based on progress ${progressScore}%`);
-        parsed.icebergLayer = progressBasedLayer;
-        parsed.layerInsight = constructLayerInsight(sanitizedMessage, progressBasedLayer);
-      }
-        
+      // Return what AI gave us - nothing more
       return NextResponse.json({
         ...parsed,
-        progressScore,
-        layerProgress,
-        progressNote,
-        _meta: { provider: aiResponse.provider, model: aiResponse.model, turn: turnCount, progress: progressScore }
+        icebergLayer: currentLayer,
+        _meta: { provider: aiResponse.provider, model: aiResponse.model, turn: turnCount }
       });
       
     } catch (aiError: unknown) {
