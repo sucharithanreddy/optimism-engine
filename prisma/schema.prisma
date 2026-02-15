@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(cuid())
+  clerkId         String           @unique
+  email           String           @unique
+  name            String?
+  avatarUrl       String?
+  role            String           @default("client")
+  therapistId     String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  sessions        Session[]
+  moodEntries     MoodEntry[]
+  gratitudeEntries GratitudeEntry[]
+  assignments     Assignment[]     @relation("ClientAssignments")
+  createdAssignments Assignment[]  @relation("TherapistAssignments")
+  dailyCheckIns   DailyCheckIn[]
+  therapistNotes  TherapistNote[]  @relation("ClientNotes")
+  writtenNotes    TherapistNote[]  @relation("TherapistNotes")
+  crisisAlerts    CrisisAlert[]    @relation("ClientAlerts")
+  createdAlerts   CrisisAlert[]    @relation("TherapistAlerts")
+}
+
+model Session {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String?
+  summary         String?
+  coreBelief      String?
+  currentLayer    String    @default("surface")
+  distortions     String?
+  isCompleted     Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  messages        Message[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Message {
+  id                    String    @id @default(cuid())
+  sessionId             String
+  session               Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role                  String
+  content               String
+  distortionType        String?
+  distortionExplanation String?
+  reframe               String?
+  probingQuestion       String?
+  encouragement         String?
+  icebergLayer          String?
+  layerInsight          String?
+  createdAt             DateTime  @default(now())
+
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+model MoodEntry {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mood        Int
+  emotions    String?
+  notes       String?
+  triggers    String?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model GratitudeEntry {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content     String
+  category    String?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model DailyCheckIn {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            DateTime  @default(now())
+  completedGoals  Int       @default(0)
+  totalGoals      Int       @default(3)
+  moodScore       Int?
+  reflection      String?
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@index([date])
+}
+
+model Assignment {
+  id              String    @id @default(cuid())
+  therapistId     String
+  therapist       User      @relation("TherapistAssignments", fields: [therapistId], references: [id], onDelete: Cascade)
+  clientId        String
+  client          User      @relation("ClientAssignments", fields: [clientId], references: [id], onDelete: Cascade)
+  title           String
+  description     String
+  dueDate         DateTime?
+  status          String    @default("pending")
+  completedAt     DateTime?
+  therapistNotes  String?
+  clientResponse  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([therapistId])
+  @@index([clientId])
+  @@index([status])
+}
+
+model TherapistNote {
+  id              String    @id @default(cuid())
+  therapistId     String
+  therapist       User      @relation("TherapistNotes", fields: [therapistId], references: [id], onDelete: Cascade)
+  clientId        String
+  client          User      @relation("ClientNotes", fields: [clientId], references: [id], onDelete: Cascade)
+  sessionId       String?
+  content         String
+  isPrivate       Boolean   @default(true)
+  tags            String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([therapistId])
+  @@index([clientId])
+}
+
+model CrisisAlert {
+  id              String    @id @default(cuid())
+  clientId        String
+  client          User      @relation("ClientAlerts", fields: [clientId], references: [id], onDelete: Cascade)
+  therapistId     String
+  therapist       User      @relation("TherapistAlerts", fields: [therapistId], references: [id], onDelete: Cascade)
+  triggerPhrase   String
+  severity        String    @default("moderate")
+  status          String    @default("active")
+  notes           String?
+  resolvedAt      DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([clientId])
+  @@index([therapistId])
+  @@index([status])
+}

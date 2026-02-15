@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0891b2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="lightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22d3ee;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <style>
+      .glow-pulse {
+        animation: pulse 3s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+      }
+    </style>
+  </defs>
+  
+  <!-- Background rounded square -->
+  <rect x="32" y="32" width="448" height="448" rx="96" fill="url(#mainGradient)"/>
+  
+  <!-- Abstract brain/mind shape -->
+  <g transform="translate(256, 220)">
+    <!-- Left hemisphere -->
+    <path d="M-60,-80 
+             Q-100,-60 -100,0 
+             Q-100,60 -60,80
+             Q-20,100 0,60
+             L0,-60
+             Q-20,-100 -60,-80Z" 
+          fill="white" opacity="0.95"/>
+    
+    <!-- Right hemisphere -->
+    <path d="M60,-80 
+             Q100,-60 100,0 
+             Q100,60 60,80
+             Q20,100 0,60
+             L0,-60
+             Q20,-100 60,-80Z" 
+          fill="white" opacity="0.85"/>
+  </g>
+  
+  <!-- Rising sun / light rays representing optimism -->
+  <g class="glow-pulse" filter="url(#glow)">
+    <!-- Center sun -->
+    <circle cx="256" cy="370" r="28" fill="url(#lightGradient)"/>
+    
+    <!-- Rays extending upward -->
+    <path d="M256,340 L256,290" stroke="url(#lightGradient)" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+    <path d="M220,350 L190,320" stroke="url(#lightGradient)" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+    <path d="M292,350 L322,320" stroke="url(#lightGradient)" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+    <path d="M240,345 L220,310" stroke="url(#lightGradient)" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+    <path d="M272,345 L292,310" stroke="url(#lightGradient)" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+  </g>
+  
+  <!-- Sparkle accents -->
+  <circle cx="320" cy="160" r="4" fill="white" opacity="0.8"/>
+  <circle cx="180" cy="180" r="3" fill="white" opacity="0.6"/>
+  <circle cx="340" cy="200" r="3" fill="white" opacity="0.7"/>
+</svg>
