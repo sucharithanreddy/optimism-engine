@@ -23,6 +23,13 @@ import { Button } from '@/components/ui/button';
 
 interface ReframeResponse {
   acknowledgment: string;
+  // New Iceberg layer fields
+  surface?: string;
+  trigger?: string;
+  emotion?: string;
+  coreBelief?: string;
+  question?: string;
+  // Legacy fields (kept for backward compatibility)
   distortionType?: string;
   distortionExplanation?: string;
   reframe?: string;
@@ -225,6 +232,13 @@ export default function ReflectPage() {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: data.acknowledgment || "Thank you for sharing.",
+        // New Iceberg layer fields
+        surface: data.surface,
+        trigger: data.trigger,
+        emotion: data.emotion,
+        coreBelief: data.coreBelief,
+        question: data.question,
+        // Legacy fields (for backward compatibility)
         distortionType: data.distortionType,
         distortionExplanation: data.distortionExplanation,
         reframe: data.reframe,
